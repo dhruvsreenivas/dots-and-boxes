@@ -1,5 +1,6 @@
 import sys
 import numpy as np
+import random
 
 
 class colors:
@@ -9,22 +10,35 @@ class colors:
     BLUEBLOCK = '\033[106m'
     ENDC = '\033[0m'
 
-    def getFill(self, color):
-        if color == self.RED:
-            return self.REDBLOCK
-        else:
-            return self.BLUEBLOCK
+
+class Player():
+    def __init__(self, id, color):
+        self.id = id
+        self.color = color
+        self.score = 0
+
+    def get_fill(self):
+        return colors.REDBLOCK if self.color == colors.RED else colors.BLUEBLOCK
+
+    def get_score(self):
+        return self.score
+
+    def give_point(self):
+        self.score += 1
+
+    def get_color(self):
+        return self.color
 
 
 class Edge():
     def __init__(self, point1, point2):
         self.edge = (point1, point2)
-        self.color = None
+        self.player = None
         self.boxes = []
 
     def take_edge(self, player):
-        if self.color is None:
-            self.color = player
+        if self.player is None:
+            self.player = player
 
     def add_box(self, box):
         self.boxes.append(box)
@@ -36,7 +50,7 @@ class Box():
         self.player = None
 
     def is_complete(self):
-        return all([edge.color is not None for edge in self.edges])
+        return all([edge.player is not None for edge in self.edges])
 
     def take_box(self, player):
         if self.player is None:
@@ -52,6 +66,9 @@ class Game():
         self.horizontal_edges = []
         self.vertical_edges = []
         self.dimensions = (m, n)
+        self.p1 = Player(1, colors.RED)
+        self.p2 = Player(2, colors.BLUE)
+        self.curr_player = self.p1
 
         # m rows, n columns
         # each row is of the form (n * k, (n+1)k - 1)
@@ -87,37 +104,40 @@ class Game():
             for edge in edge_list:
                 self.available_edges.append(edge)
 
-        self.A = 0
-        self.B = 0
-        self.curr_player = 0
-
     def print_board(self):
         (m, n) = self.dimensions
         h_lines = []
+
+        top_line = "  "
+
         for i in range(m):
-            line = ""
+            line = str(i) + " "
             for j in range(n - 1):
-                color = self.horizontal_edges[i][j].color
-                line += "+ " + color + "--" + colors.ENDC + " " if color \
-                    is not None else "+    "
+                player = self.horizontal_edges[i][j].player
+                line += "+ " + player.get_color() + "--" + colors.ENDC + \
+                    " " if player is not None else "+    "
             h_lines.append(line + "+")
 
         v_lines = []
         for i in range(m - 1):
-            line = ""
+            line = "  "
             for j in range(n):
                 filled = ""
                 if j != n - 1 and self.boxes[i][j].is_complete():
-                    filled = colors().getFill(self.boxes[i][j].get_player())
-                color = self.vertical_edges[i][j].color
-                line += color + "| " + filled + "  " + colors.ENDC + " " + colors.ENDC if color is not None \
+                    filled = self.boxes[i][j].get_player().get_fill()
+                player = self.vertical_edges[i][j].player
+                line += player.get_color() + "| " + filled + "  " + colors.ENDC + " " + colors.ENDC if player is not None \
                     else "     "
             v_lines.append(line[:-4])
 
-        v_lines.append([])
+        v_lines.append('')
 
         board_lines = [val for pair in zip(
             h_lines, v_lines) for val in pair][:-1]
+
+        for i in range(n):
+            top_line += str(i) + "    "
+        board_lines = [top_line] + board_lines
 
         print("\n" + "\n".join(board_lines) + "\n")
 
@@ -126,47 +146,29 @@ class Game():
         # make edge color whatever the current player is
         if edge in self.available_edges:
             self.available_edges.remove(edge)
-
             edge.take_edge(self.curr_player)
             for box in edge.boxes:
-                if box.is_complete:
+                if box.is_complete():
                     box_taken = True
                     box.take_box(self.curr_player)
-                    if self.curr_player == 0:
-                        self.A += 1
-                    else:
-                        self.B += 1
+                    self.curr_player.give_point()
 
-        self.curr_player = not self.curr_player if not box_taken else \
-            self.curr_player
+            if not box_taken:
+                self.curr_player = self.p1 if self.curr_player == self.p2 \
+                    else self.p2
+
+    def play_game(self):
+        while self.available_edges:
+            self.print_board()
+            i = random.randint(0, len(self.available_edges) - 1)
+            edge = self.available_edges[i]
+            self.step(edge)
+        self.print_board()
+        print(self.p1.score)
+        print(self.p2.score)
 
 
 if __name__ == '__main__':
-    game = Game(2, 3)
-    for edge_list in game.horizontal_edges:
-        for edge in edge_list:
-            # print(type(edge))
-            print(edge.edge)
-    print('------')
-    for edge_list in game.vertical_edges:
-        for edge in edge_list:
-            # print(type(edge))
-            print(edge.edge)
 
-    print('box check and shit')
-    for row in game.boxes:
-        for box in row:
-            edge_list = box.edges
-            for edge in edge_list:
-                print(edge.edge)
-
-        print('------')
-
-    game.horizontal_edges[0][0].color = colors.BLUE
-    game.vertical_edges[0][0].color = colors.RED
-    game.horizontal_edges[1][0].color = colors.RED
-    game.vertical_edges[0][1].color = colors.RED
-    game.boxes[0][0].player = colors.RED
-    game.print_board()
-
-    print([edge.edge for edge in game.available_edges])
+    game = Game(3, 4)
+    game.play_game()
