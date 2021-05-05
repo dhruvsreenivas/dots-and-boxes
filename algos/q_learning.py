@@ -3,7 +3,7 @@ import random
 from collections import defaultdict
 
 
-class QLearningAgent():
+class QLearningAgent:
     '''
     Inputs:
 
@@ -12,17 +12,20 @@ class QLearningAgent():
     :param gamma: discount factor in game
     '''
 
-    def __init__(self, alpha=0.01, epsilon=0.1, gamma=0.99):
+    def __init__(self, game, alpha=0.01, epsilon=0.1, gamma=0.99):
+        self.game = game
         self.lr = alpha
         self.eps = epsilon
         self.gamma = gamma
 
-        self.q_table = defaultdict(lambda: defaultdict(int))
+        self.q_table = defaultdict(lambda: defaultdict(float))
+        # if state ends up being winning through trial and error, we set value of it to 1.0 (not super precise but we have to do it)
 
     def get_value(self, state, action):
         return self.q_table[state][action]
 
-    def get_action(self, state, action_set):
+    def get_action(self, state):
+        action_set = self.game.available_edges
         if np.random.uniform() < self.eps:
             # go full random
             idx = np.random.uniform(0, len(action_set))
@@ -34,8 +37,14 @@ class QLearningAgent():
         return action
 
     def update(self, old_state, old_action, reward, new_state):
-        new_value = reward + max([self.q_table[new_state][a]
-                                  for a in self.q_table[new_state].keys()])  # r + max_{a'} Q(s', a')
+        if new_state in self.q_table.keys() and len(self.q_table[new_state]) > 0:
+            new_value = reward + self.gamma * max([self.q_table[new_state][a]
+                                                   for a in self.q_table[new_state].keys()])  # r + gamma * max_{a'} Q(s', a')
+        else:
+            # in this case we have it defaulted to 0 for the Q values so we just get r
+            new_value = reward
+
         old_value = self.q_table[old_state][old_action]
+        # Q_new(s, a) = Q(s, a) + alpha (r + gamma * max_{a'} Q(s', a') - Q(s, a))
         self.q_table[old_state][old_action] = old_value + \
             self.lr * (new_value - old_value)

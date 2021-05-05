@@ -143,6 +143,7 @@ class Game():
 
     def step(self, edge):
         box_taken = False
+        reward = 0
         # make edge color whatever the current player is
         if edge in self.available_edges:
             self.available_edges.remove(edge)
@@ -152,13 +153,16 @@ class Game():
                     box_taken = True
                     box.take_box(self.curr_player)
                     self.curr_player.give_point()
+                    reward = 1
 
             if not box_taken:
                 self.curr_player = self.p1 if self.curr_player == self.p2 \
                     else self.p2
 
+            return reward
+
     def play_game(self):
-        while self.available_edges:
+        while len(self.available_edges) > 0:
             self.print_board()
             i = random.randint(0, len(self.available_edges) - 1)
             edge = self.available_edges[i]
