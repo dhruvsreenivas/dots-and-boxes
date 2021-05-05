@@ -176,3 +176,14 @@ if __name__ == '__main__':
 
     game = Game(3, 4)
     game.play_game()
+
+# def main():
+#     '''
+#     This is the main() function. Initialize the root node and call the
+#     best_action function to get the best node. This is not a member
+#     function of the class. All the other functions are member function
+#     of the class.
+#     '''
+#     root = MonteCarloTreeSearchNode(state=initial_state)
+#     selected_node = root.best_action()
+#     return
