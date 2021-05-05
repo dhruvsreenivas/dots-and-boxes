@@ -6,6 +6,8 @@ from collections import defaultdict
 
 # THIS IS NOT MY WORK
 
+# STEP SHOULD RETURN A NEW STATE, NOT MODIFY
+
 class MonteCarloTreeSearchNode():
     '''
     state: For our game it represents the board state. Generally the board
@@ -51,6 +53,7 @@ class MonteCarloTreeSearchNode():
         turn of our game there are 81 possible actions. For the second turn it
         is 8 or 9. This varies in our game.
         '''
+        # NEED get_legal_actions() function in Game
         self._untried_actions = self.state.get_legal_actions()
         return self._untried_actions
 
@@ -78,6 +81,8 @@ class MonteCarloTreeSearchNode():
         this generated state is returned.
         '''
         action = self._untried_actions.pop()
+        # NEED move() function in Game
+
         next_state = self.state.move(action)
         child_node = MonteCarloTreeSearchNode(
             next_state, parent=self, parent_action=action)
@@ -90,6 +95,7 @@ class MonteCarloTreeSearchNode():
         This is used to check if the current node is terminal or not. Terminal
         node is reached when the game is over.
         '''
+        # NEED is_game_over() function in Game
         return self.state.is_game_over()
 
     def rollout(self):
@@ -185,6 +191,7 @@ class MonteCarloTreeSearchNode():
         possible actions from current state.
         Returns a list.
         '''
+        pass
 
     def is_game_over(self):
         '''
@@ -193,6 +200,7 @@ class MonteCarloTreeSearchNode():
         and depends on your game. Returns
         true or false
         '''
+        pass
 
     def game_result(self):
         '''
@@ -201,6 +209,7 @@ class MonteCarloTreeSearchNode():
         on your state corresponding to win,
         tie or a loss.
         '''
+        pass
 
     def move(self, action):
         '''
@@ -216,3 +225,4 @@ class MonteCarloTreeSearchNode():
         represents that x is placed. Returns
         the new state after making a move.
         '''
+        pass
