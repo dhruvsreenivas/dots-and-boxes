@@ -60,6 +60,52 @@ class Box():
         return self.player
 
 
+class State():
+
+    def get_legal_actions(self):
+        '''
+        Modify according to your game or
+        needs. Constructs a list of all
+        possible actions from current state.
+        Returns a list.
+        '''
+        pass
+
+    def is_game_over(self):
+        '''
+        Modify according to your game or
+        needs. It is the game over condition
+        and depends on your game. Returns
+        true or false
+        '''
+        pass
+
+    def game_result(self):
+        '''
+        Modify according to your game or
+        needs. Returns 1 or 0 or -1 depending
+        on your state corresponding to win,
+        tie or a loss.
+        '''
+        pass
+
+    def move(self, action):
+        '''
+        Modify according to your game or
+        needs. Changes the state of your
+        board with a new value. For a normal
+        Tic Tac Toe game, it can be a 3 by 3
+        array with all the elements of array
+        being 0 initially. 0 means the board
+        position is empty. If you place x in
+        row 2 column 3, then it would be some
+        thing like board[2][3] = 1, where 1
+        represents that x is placed. Returns
+        the new state after making a move.
+        '''
+        pass
+
+
 class Game():
     def __init__(self, m, n):
         self.board = np.zeros((m, n))
@@ -176,3 +222,14 @@ if __name__ == '__main__':
 
     game = Game(3, 4)
     game.play_game()
+
+# def main():
+#     '''
+#     This is the main() function. Initialize the root node and call the
+#     best_action function to get the best node. This is not a member
+#     function of the class. All the other functions are member function
+#     of the class.
+#     '''
+#     root = MonteCarloTreeSearchNode(state=initial_state)
+#     selected_node = root.best_action()
+#     return
