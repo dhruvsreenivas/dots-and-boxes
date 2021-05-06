@@ -21,9 +21,6 @@ class QLearningAgent:
         self.q_table = defaultdict(lambda: defaultdict(float))
         # if state ends up being winning through trial and error, we set value of it to 1.0 (not super precise but we have to do it)
 
-    def get_value(self, state, action):
-        return self.q_table[state][action]
-
     def get_action(self, state):
         action_set = self.game.available_edges
         if np.random.uniform() < self.eps:
@@ -32,8 +29,13 @@ class QLearningAgent:
             action = action_set[idx]
         else:
             # take best action according to current Q function
-            idx = np.argmax([self.q_table[state][a] for a in action_set])
-            action = action_set[idx]
+            if len(self.q_table[state].keys()) == 0:
+                # no actions so you just go random
+                idx = np.random.uniform(0, len(action_set))
+                action = action_set[idx]
+            else:
+                idx = np.argmax([self.q_table[state][a] for a in action_set])
+                action = action_set[idx]
         return action
 
     def update(self, old_state, old_action, reward, new_state):
