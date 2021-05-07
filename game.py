@@ -202,7 +202,7 @@ class Game():
                 elif edge.player == self.p1:
                     rep += '1'
                 else:
-                    rep += '-1'
+                    rep += '2'
         return rep
 
     def print_board(self):
@@ -254,7 +254,7 @@ class Game():
                     box_taken = True
                     box.take_box(self.curr_player)
                     self.curr_player.give_point()
-                    reward = 1
+                    reward += 1
 
             if not box_taken:
                 self.curr_player = self.p1 if self.curr_player == self.p2 \

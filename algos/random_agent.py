@@ -12,6 +12,6 @@ class RandomAgent:
 
     def get_action(self, state):
         action_set = self.game.available_edges
-        idx = np.random.uniform(0, len(action_set))
+        idx = np.random.randint(0, len(action_set))
         action = action_set[idx]
         return action
