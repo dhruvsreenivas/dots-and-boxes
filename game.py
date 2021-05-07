@@ -150,6 +150,61 @@ class Game():
             for edge in edge_list:
                 self.available_edges.append(edge)
 
+    def reset(self):
+        m, n = self.dimensions
+        self.board = np.zeros((m, n))
+        self.horizontal_edges = []
+        self.vertical_edges = []
+        self.p1 = Player(1, colors.RED)
+        self.p2 = Player(2, colors.BLUE)
+        self.curr_player = self.p1
+
+        # m rows, n columns
+        # each row is of the form (n * k, (n+1)k - 1)
+        for i in range(m):
+            self.horizontal_edges.append(
+                [Edge(i * n + j, i * n + j + 1) for j in range(n-1)])
+
+        for i in range(m-1):
+            self.vertical_edges.append(
+                [Edge(i * n + j, (i+1) * n + j) for j in range(n)])
+
+        self.boxes = []
+        for i in range(m-1):
+            row = []
+            for j in range(n-1):
+                edges = [self.horizontal_edges[i][j],
+                         self.horizontal_edges[i+1][j],
+                         self.vertical_edges[i][j],
+                         self.vertical_edges[i][j+1]]
+                box = Box(edges)
+
+                for edge in box.edges:
+                    edge.add_box(box)
+                row.append(box)
+            self.boxes.append(row)
+
+        # at this point, all edges have boxes that they're a part of, and all
+        # boxes are a collection of edges
+
+        # now need a set of all available edges to start
+        self.available_edges = []
+        for edge_list in self.horizontal_edges + self.vertical_edges:
+            for edge in edge_list:
+                self.available_edges.append(edge)
+
+    def get_state_rep(self):
+        rep = ''
+        for edge_list in self.horizontal_edges + self.vertical_edges:
+            for edge in edge_list:
+                if edge.player == None:
+                    rep += '0'
+                elif edge.player == self.p1:
+                    rep += '1'
+                else:
+                    rep += '-1'
+        return rep
+
     def print_board(self):
         (m, n) = self.dimensions
         h_lines = []
@@ -205,7 +260,10 @@ class Game():
                 self.curr_player = self.p1 if self.curr_player == self.p2 \
                     else self.p2
 
-            return reward
+            done = len(self.available_edges) == 0
+            return reward, done
+        else:
+            raise ValueError('Not a valid action')
 
     def play_game(self):
         while len(self.available_edges) > 0:
