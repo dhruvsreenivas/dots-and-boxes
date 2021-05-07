@@ -19,7 +19,7 @@ class QLearningAgent:
         self.gamma = gamma
 
         self.q_table = defaultdict(lambda: defaultdict(float))
-        # if state ends up being winning through trial and error, we set value of it to 1.0 (not super precise but we have to do it)
+        # reward must be just number of boxes--if we maximize number of boxes taken, we win gentlemen
 
     def get_action(self, state):
         action_set = self.game.available_edges
