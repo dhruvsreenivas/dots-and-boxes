@@ -1,33 +1,11 @@
-import sys
 import numpy as np
 import random
-
-
-class colors:
-    BLUE = '\033[96m'
-    RED = '\033[91m'
-    REDBLOCK = '\033[101m'
-    BLUEBLOCK = '\033[106m'
-    ENDC = '\033[0m'
-
-
-class Player():
-    def __init__(self, id, color):
-        self.id = id
-        self.color = color
-        self.score = 0
-
-    def get_fill(self):
-        return colors.REDBLOCK if self.color == colors.RED else colors.BLUEBLOCK
-
-    def get_score(self):
-        return self.score
-
-    def give_point(self):
-        self.score += 1
-
-    def get_color(self):
-        return self.color
+import player as play
+import colors
+import monte_carlo as mc
+import state
+from copy import deepcopy
+import minimax
 
 
 class Edge():
@@ -42,6 +20,18 @@ class Edge():
 
     def add_box(self, box):
         self.boxes.append(box)
+
+    def would_take_box(self):
+        for box in self.boxes:
+            if box.count() == 3:
+                return True
+        return False
+
+    def would_set_up(self):
+        for box in self.boxes:
+            if box.count() == 2:
+                return True
+        return False
 
 
 class Box():
@@ -59,62 +49,22 @@ class Box():
     def get_player(self):
         return self.player
 
-
-class State():
-
-    def get_legal_actions(self):
-        '''
-        Modify according to your game or
-        needs. Constructs a list of all
-        possible actions from current state.
-        Returns a list.
-        '''
-        pass
-
-    def is_game_over(self):
-        '''
-        Modify according to your game or
-        needs. It is the game over condition
-        and depends on your game. Returns
-        true or false
-        '''
-        pass
-
-    def game_result(self):
-        '''
-        Modify according to your game or
-        needs. Returns 1 or 0 or -1 depending
-        on your state corresponding to win,
-        tie or a loss.
-        '''
-        pass
-
-    def move(self, action):
-        '''
-        Modify according to your game or
-        needs. Changes the state of your
-        board with a new value. For a normal
-        Tic Tac Toe game, it can be a 3 by 3
-        array with all the elements of array
-        being 0 initially. 0 means the board
-        position is empty. If you place x in
-        row 2 column 3, then it would be some
-        thing like board[2][3] = 1, where 1
-        represents that x is placed. Returns
-        the new state after making a move.
-        '''
-        pass
+    def count(self):
+        return sum([1 for e in self.edges if e.player is not None])
 
 
 class Game():
+
     def __init__(self, m, n):
         self.board = np.zeros((m, n))
         self.horizontal_edges = []
         self.vertical_edges = []
         self.dimensions = (m, n)
-        self.p1 = Player(1, colors.RED)
-        self.p2 = Player(2, colors.BLUE)
+        self.p1 = play.Player(1, colors.RED)
+        self.p2 = play.Player(2, colors.BLUE)
         self.curr_player = self.p1
+        self.alpha = -10000000
+        self.beta = 10000000
 
         # m rows, n columns
         # each row is of the form (n * k, (n+1)k - 1)
@@ -172,8 +122,9 @@ class Game():
                 if j != n - 1 and self.boxes[i][j].is_complete():
                     filled = self.boxes[i][j].get_player().get_fill()
                 player = self.vertical_edges[i][j].player
-                line += player.get_color() + "| " + filled + "  " + colors.ENDC + " " + colors.ENDC if player is not None \
-                    else "     "
+                line += player.get_color() + "| " + filled + "  " + \
+                    colors.ENDC + " " + colors.ENDC \
+                    if player is not None else "     "
             v_lines.append(line[:-4])
 
         v_lines.append('')
@@ -187,49 +138,105 @@ class Game():
 
         print("\n" + "\n".join(board_lines) + "\n")
 
+    def get_edge(self, edge):
+        for e in self.available_edges:
+            if edge.edge == e.edge:
+                return e
+        assert 1 == 0
+
     def step(self, edge):
         box_taken = False
         reward = 0
         # make edge color whatever the current player is
-        if edge in self.available_edges:
-            self.available_edges.remove(edge)
-            edge.take_edge(self.curr_player)
-            for box in edge.boxes:
-                if box.is_complete():
-                    box_taken = True
-                    box.take_box(self.curr_player)
-                    self.curr_player.give_point()
-                    reward = 1
+        self.available_edges.remove(edge)
+        edge.take_edge(self.curr_player)
+        for box in edge.boxes:
+            if box.is_complete():
+                box_taken = True
+                box.take_box(self.curr_player)
+                self.curr_player.give_point()
+                reward += 1
 
-            if not box_taken:
-                self.curr_player = self.p1 if self.curr_player == self.p2 \
-                    else self.p2
+        if not box_taken:
+            self.curr_player = self.p1 if self.curr_player == self.p2 \
+                else self.p2
 
-            return reward
+        return reward
 
-    def play_game(self):
+    def get_input(self):
+        edge = None
+        while edge is None:
+            try:
+                x = int(input('First number: '))
+                y = int(input('Second number: '))
+                e = Edge(x, y)
+                edge = self.get_edge(e)
+            except Exception:
+                print('Try Again')
+        return edge
+
+    def monte_carloP1(self, enumerations):
+        root = mc.MonteCarloTreeSearchNode(state.State(deepcopy(self)))
+        action = root.best_action(enumerations).parent_action
+        return self.get_edge(action)
+
+    def minimaxP1(self):
+        action = minimax.bestMovePlayer1(self)
+        return self.get_edge(action)
+
+    def minimaxP2(self):
+        action = minimax.bestMovePlayer2(self)
+        return self.get_edge(action)
+
+    def policy(self):
+        for e in self.available_edges:
+            if e.would_take_box():
+                return e
+        options = []
+        for e in self.available_edges:
+            if not e.would_set_up():
+                options.append(e)
+        if options:
+            return options[np.random.randint(len(options))]
+        return self.available_edges[np.random.randint(len(self.available_edges))]
+
+    def random(self):
+        i = random.randint(0, len(self.available_edges) - 1)
+        return self.available_edges[i]
+
+    def play_game(self, enumerations):
         while len(self.available_edges) > 0:
-            self.print_board()
-            i = random.randint(0, len(self.available_edges) - 1)
-            edge = self.available_edges[i]
+            if self.curr_player == self.p1:
+                edge = self.minimaxP1()
+            else:
+                edge = self.policy()
             self.step(edge)
+
         self.print_board()
-        print(self.p1.score)
-        print(self.p2.score)
+        return self.p1.score - self.p2.score
 
 
 if __name__ == '__main__':
 
-    game = Game(3, 4)
-    game.play_game()
+    mp = {}
+    enums = [1000]
+    for enum in enums:
+        wins = 0
+        ties = 0
+        losses = 0
+        for i in range(4):
 
-# def main():
-#     '''
-#     This is the main() function. Initialize the root node and call the
-#     best_action function to get the best node. This is not a member
-#     function of the class. All the other functions are member function
-#     of the class.
-#     '''
-#     root = MonteCarloTreeSearchNode(state=initial_state)
-#     selected_node = root.best_action()
-#     return
+            game = Game(4, 4)
+            score = game.play_game(enum)
+            if score > 0:
+                wins += 1
+            elif score == 0:
+                ties += 1
+            else:
+                losses += 1
+            if (i + 1) % 10 == 0:
+                print('Game ' + str(i + 1) + ' of ' + str(enum) +
+                      ' simulations',
+                      'wins, ties, losses', wins, ties, losses)
+        mp[enum] = (wins, ties, losses)
+    print(mp)

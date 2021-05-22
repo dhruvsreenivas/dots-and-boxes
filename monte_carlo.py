@@ -6,33 +6,7 @@ from collections import defaultdict
 
 # THIS IS NOT MY WORK
 
-# STEP SHOULD RETURN A NEW STATE, NOT MODIFY
-
 class MonteCarloTreeSearchNode():
-    '''
-    state: For our game it represents the board state. Generally the board
-    state is represented by an array. For normal Tic Tac Toe, it is a 3 by 3
-    array.
-
-    parent: It is None for the root node and for other nodes it is equal to the
-    node it is derived from. For the first turn as you have seen from the game
-    it is None.
-
-    children: It contains all possible actions from the current node. For the
-    second turn in our game this is 9 or 8 depending on where you make your
-    move.
-
-    parent_action: None for the root node and for other nodes it is equal to
-    the action which it’s parent carried out.
-
-    _number_of_visits: Number of times current node is visited
-
-    results: It’s a dictionary
-
-    _untried_actions: Represents the list of all possible actions
-
-    action: Move which has to be carried out.
-    '''
 
     def __init__(self, state, parent=None, parent_action=None):
         self.state = state
@@ -53,7 +27,6 @@ class MonteCarloTreeSearchNode():
         turn of our game there are 81 possible actions. For the second turn it
         is 8 or 9. This varies in our game.
         '''
-        # NEED get_legal_actions() function in Game
         self._untried_actions = self.state.get_legal_actions()
         return self._untried_actions
 
@@ -80,8 +53,8 @@ class MonteCarloTreeSearchNode():
         present state are all generated and the child_node corresponding to
         this generated state is returned.
         '''
+
         action = self._untried_actions.pop()
-        # NEED move() function in Game
 
         next_state = self.state.move(action)
         child_node = MonteCarloTreeSearchNode(
@@ -110,9 +83,7 @@ class MonteCarloTreeSearchNode():
         current_rollout_state = self.state
 
         while not current_rollout_state.is_game_over():
-
             possible_moves = current_rollout_state.get_legal_actions()
-
             action = self.rollout_policy(possible_moves)
             current_rollout_state = current_rollout_state.move(action)
         return current_rollout_state.game_result()
@@ -143,7 +114,10 @@ class MonteCarloTreeSearchNode():
         children array. The first term in the formula corresponds to
         exploitation and the second term corresponds to exploration.
         '''
-        choices_weights = [(c.q() / c.n()) + c_param *
+        mult = 1
+        if self.state.board.curr_player == self.state.board.p2:
+            mult = -1
+        choices_weights = [mult * ((c.q() / c.n())) + c_param *
                            np.sqrt((2 * np.log(self.n()) / c.n())) for c in
                            self.children]
         return self.children[np.argmax(choices_weights)]
@@ -153,6 +127,15 @@ class MonteCarloTreeSearchNode():
         Randomly selects a move out of possible moves. This is an example of
         random playout.
         '''
+        for e in possible_moves:
+            if e.would_take_box():
+                return e
+        options = []
+        for e in possible_moves:
+            if not e.would_set_up():
+                options.append(e)
+        if options:
+            return options[np.random.randint(len(options))]
         return possible_moves[np.random.randint(len(possible_moves))]
 
     def _tree_policy(self):
@@ -161,68 +144,22 @@ class MonteCarloTreeSearchNode():
         '''
         current_node = self
         while not current_node.is_terminal_node():
-
             if not current_node.is_fully_expanded():
                 return current_node.expand()
             else:
                 current_node = current_node.best_child()
         return current_node
 
-    def best_action(self):
+    def best_action(self, enumerations):
         '''
         This is the best action function which returns the node corresponding
         to best possible move. The step of expansion, simulation and
         backpropagation are carried out by the code above.
         '''
-        simulation_no = 100
-
-        for i in range(simulation_no):
-
+        simulation_no = enumerations
+        for _ in range(simulation_no):
             v = self._tree_policy()
             reward = v.rollout()
             v.backpropagate(reward)
 
         return self.best_child(c_param=0.)
-
-    def get_legal_actions(self):
-        '''
-        Modify according to your game or
-        needs. Constructs a list of all
-        possible actions from current state.
-        Returns a list.
-        '''
-        pass
-
-    def is_game_over(self):
-        '''
-        Modify according to your game or
-        needs. It is the game over condition
-        and depends on your game. Returns
-        true or false
-        '''
-        pass
-
-    def game_result(self):
-        '''
-        Modify according to your game or
-        needs. Returns 1 or 0 or -1 depending
-        on your state corresponding to win,
-        tie or a loss.
-        '''
-        pass
-
-    def move(self, action):
-        '''
-        Modify according to your game or
-        needs. Changes the state of your
-        board with a new value. For a normal
-        Tic Tac Toe game, it can be a 3 by 3
-        array with all the elements of array
-        being 0 initially. 0 means the board
-        position is empty. If you place x in
-        row 2 column 3, then it would be some
-        thing like board[2][3] = 1, where 1
-        represents that x is placed. Returns
-        the new state after making a move.
-        '''
-        pass
