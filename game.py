@@ -206,6 +206,7 @@ class Game():
 
     def play_game(self, enumerations):
         while len(self.available_edges) > 0:
+            # self.print_board()
             if self.curr_player == self.p1:
                 edge = self.minimaxP1()
             else:
@@ -224,9 +225,9 @@ if __name__ == '__main__':
         wins = 0
         ties = 0
         losses = 0
-        for i in range(4):
+        for i in range(1000):
 
-            game = Game(4, 4)
+            game = Game(2, 3)
             score = game.play_game(enum)
             if score > 0:
                 wins += 1
