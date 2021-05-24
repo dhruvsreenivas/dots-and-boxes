@@ -1,4 +1,4 @@
-import colors
+import objects.colors as colors
 
 
 class Player():

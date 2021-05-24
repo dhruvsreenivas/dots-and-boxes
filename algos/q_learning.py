@@ -25,14 +25,12 @@ class QLearningAgent:
         action_set = self.game.available_edges
         if np.random.uniform() < self.eps:
             # go full random
-            idx = np.random.randint(0, len(action_set))
-            action = action_set[idx]
+            action = np.random.choice(action_set)
         else:
             # take best action according to current Q function
             if len(self.q_table[state].keys()) == 0:
                 # no actions so you just go random
-                idx = np.random.randint(0, len(action_set))
-                action = action_set[idx]
+                action = np.random.choice(action_set)
                 # don't need to set up the defaultdict because the keys will default to the normal default parameters
             else:
                 idx = np.argmax([self.q_table[state][a] for a in action_set])
