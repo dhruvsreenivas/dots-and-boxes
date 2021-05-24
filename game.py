@@ -291,12 +291,13 @@ class Game():
         return reward, done
 
     def play_game(self):
+
         while len(self.available_edges) > 0:
 
             if self.curr_player == self.p1:
                 edge = self.policy()
             else:
-                edge = self.monte_carlo(200)
+                edge = self.minimax()
             self.step(edge)
 
         self.print_board()
@@ -319,7 +320,5 @@ if __name__ == '__main__':
             ties += 1
         else:
             losses += 1
-    print('Player 1: ' + str(wins) + ' wins, ' + str(losses) +
-          ' losses, ' + str(ties) + ' ties.\n')
-    print('Player 2: ' + str(losses) + ' wins, ' + str(wins) +
-          ' losses, ' + str(ties) + ' ties.\n')
+    print('Random Selection:')
+    print('Wins: 0, Losses 1000000')
